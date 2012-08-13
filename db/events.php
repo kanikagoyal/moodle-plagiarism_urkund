@@ -39,6 +39,11 @@ $handlers = array (
         'handlerfunction'  => 'event_content_done',
         'schedule'         => 'cron'
     ),
+    'assessable_quiz_submitted' => array (
+        'handlerfile'      => '/plagiarism/urkund/lib.php',
+        'handlerfunction'  => 'event_quiz_submitted',
+        'schedule'         => 'cron'
+    ),
     'mod_created' => array (
         'handlerfile'      => '/plagiarism/urkund/lib.php',
         'handlerfunction'  => 'event_mod_created',
