@@ -545,6 +545,23 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
             return true;
         }
 
+        // Assessable quiz questions are submitted
+        if ($eventdata->eventtype == 'quiz_submitted') {
+            $result = true;
+            $sql = "SELECT * FROM {question} q JOIN {quiz_question_instances} i
+                    ON i.question = q.id WHERE i.quiz = ? AND q.qtype='essay'";
+            $essayquestions = $DB->get_records_sql($sql, array($eventdata->quizid));
+            foreach ($essayquestions as $ques) {
+                $essayans = $DB->get_record('question_attempts', array('questionusageid' => $eventdata->attemptid, 'questionid' => $ques->id));
+                $eventdata->content = $essayans->responsesummary;
+                $file = urkund_create_temp_file($cmid, $eventdata);
+                $sendresult = urkund_send_file($cmid, $eventdata->userid, $file, $plagiarismsettings);
+                $result = $result && $sendresult;
+                unlink($file->filepath);
+            }
+            return $result;
+        }
+
         // Text is attached
         $result = true;
         if (!empty($eventdata->content)) {
@@ -633,6 +650,12 @@ function event_content_done($eventdata) {
     return $urkund->event_handler($eventdata);
 }
 
+function event_quiz_submitted($eventdata) {
+    $eventdata->eventtype = 'quiz_submitted';
+    $urkund = new plagiarism_plugin_urkund();
+    return $urkund->event_handler($eventdata);
+}
+
 function event_mod_created($eventdata) {
     $result = true;
         //a new module has been created - this is a generic event that is called for all module types
@@ -658,7 +681,7 @@ function event_mod_deleted($eventdata) {
 }
 
 function urkund_supported_events() {
-    $supported_events = array('file_uploaded', 'files_done', 'content_uploaded', 'content_done');
+    $supported_events = array('file_uploaded', 'files_done', 'content_uploaded', 'content_done', 'quiz_submitted');
     return $supported_events;
 }
 
